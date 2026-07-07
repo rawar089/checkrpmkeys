@@ -1,0 +1,10 @@
+*.tar.xz
+*.tar.xz.sig
+*.tar.gz
+.idea
+.vscode
+*.log
+# ignore rust build dirs everywhere
+**/target/
+**/tests/
+/build

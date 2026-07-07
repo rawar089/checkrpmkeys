@@ -1,0 +1,16 @@
+[package]
+name = "checkrpmkeys"
+version = "0.1.0"
+edition = "2024"
+authors = ["rawar089"]
+license = "GPL-3"
+
+[dependencies]
+tabled = { version = "0.19.0" }
+sequoia-openpgp = "2.4.0"
+chrono = "0.4.45"
+owo-colors = "4.3.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.6.1", features = ["derive"] }
+
