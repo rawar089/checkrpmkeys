@@ -41,11 +41,11 @@ struct GpgKeyRecord {
 )]
 struct Args {
     /// Output the completely raw records array as pretty-printed JSON payload for debugging
-    #[arg(long, conflicts_with = "generate")]
+    #[arg(short, long, conflicts_with = "generate")]
     json: bool,
 
     /// Generate an actionable bash shell script containing exact 'rpm -e' removal targets for expired keys
-    #[arg(long, conflicts_with = "json")]
+    #[arg(short, long, conflicts_with = "json")]
     generate: bool,
 }
 
@@ -94,7 +94,7 @@ fn get_expiration_timestamp(cert: &Cert) -> Option<SystemTime> {
     }
     None
 }
-fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<(GpgKeyRecord, bool)> {
+fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
     let mut gpg_data = Vec::new();
     let policy = &StandardPolicy::new();
     let debug = false;
@@ -142,7 +142,7 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<(GpgKeyRecord, bool)>
                 Ok(_valid_cert) => {  // cert is valid with policy
                                       is_valid = true; // TODO missing revocation check
                                    },
-                Err(e) if !is_expired => { // Strange error
+                Err(e) if !is_expired && debug => { // Strange error
                                                   println!("Error: {}\nq", e);
                                                },
                 Err(_) =>  {},  // expired anyway
@@ -161,7 +161,7 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<(GpgKeyRecord, bool)>
             expired: is_expired,
         };
 
-        gpg_data.push((record, is_expired));
+        gpg_data.push(record);
     }
     gpg_data
 }
@@ -215,8 +215,8 @@ fn main() {
         );
     }
 
-    let raw_data = fetch_rpm_gpg_packages();
-    if raw_data.is_empty() {
+    let rpm_data = fetch_rpm_gpg_packages();
+    if rpm_data.is_empty() {
         if !optional_output {
             println!("{}", "No gpg-pubkey packages found or rpm command missing.".yellow()
             );
@@ -225,15 +225,15 @@ fn main() {
         }
     }
 
-    let enriched_data = get_gpg_data(raw_data);
+    let gpg_data = get_gpg_data(rpm_data);
 
     let mut table_rows = Vec::new();
     let mut expired_keys = Vec::new();
     let mut expired_indices = Vec::new();
     let mut expired_count = 0;
 
-    for (idx, (record, is_expired)) in enriched_data.into_iter().enumerate() {
-        if is_expired {
+    for (idx, record) in gpg_data.into_iter().enumerate() {
+        if record.expired {
             expired_count += 1;
             expired_indices.push(idx + 1);
             expired_keys.push(record.clone());
