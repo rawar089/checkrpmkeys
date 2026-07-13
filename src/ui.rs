@@ -115,8 +115,8 @@ fn draw_table(f: &mut Frame, area: Rect, app: &mut App) {
 
     let widths = [
         Constraint::Percentage(15),
-        Constraint::Percentage(10),
-        Constraint::Percentage(30),
+        Constraint::Percentage(5),
+        Constraint::Percentage(35),
         Constraint::Length(12),
         Constraint::Length(20),
         Constraint::Length(11),

@@ -114,7 +114,7 @@ impl Translations {
                 total: "total",
 
                 col_package: "Package",
-                col_key_type: "Key Type",
+                col_key_type: "Type",
                 col_owner: "Owner (UID)",
                 col_expires: "Expires",
                 col_fingerprint: "Fingerprint",
@@ -164,7 +164,7 @@ impl Translations {
                 total: "gesamt",
 
                 col_package: "Paket",
-                col_key_type: "Schl\u{00FC}sseltyp",
+                col_key_type: "Typ",
                 col_owner: "Eigent\u{00FC}mer (UID)",
                 col_expires: "L\u{00E4}uft ab",
                 col_fingerprint: "Fingerabdruck",
@@ -214,7 +214,7 @@ impl Translations {
                 total: "total",
 
                 col_package: "Paquet",
-                col_key_type: "Type de cl\u{00E9}",
+                col_key_type: "Type",
                 col_owner: "Propri\u{00E9}taire (UID)",
                 col_expires: "Expire le",
                 col_fingerprint: "Empreinte",

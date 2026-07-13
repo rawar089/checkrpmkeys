@@ -28,7 +28,7 @@ use crate::data::GpgKeyRecord;
     author = "rawar089",
     version = "0.2",
     about = "Checks installed RPM repository GPG signing keys for expirations.",
-    long_about = "Queries the local RPM database for 'gpg-pubkey' packages, decodes their internal cryptographic profiles using sequoia, and analyzes expiration states."
+    long_about = "Queries the local RPM database for 'gpg-pubkey' packages, decodes their internal cryptographic profiles using sequoia, and displays expiration states in  a tui."
 )]
 
 struct Args {
@@ -36,7 +36,7 @@ struct Args {
     #[arg(short, long, conflicts_with = "generate", conflicts_with = "yaml")]
     json: bool,
 
-    /// Generate an bash shell script containing 'rpm -e' removal targets for expired keys
+    /// Generate a bash shell script containing 'rpm -e' removal targets for expired keys
     #[arg(short, long, conflicts_with = "json", conflicts_with = "yaml")]
     generate: bool,
 
