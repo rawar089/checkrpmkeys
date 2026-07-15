@@ -11,6 +11,7 @@ use sequoia_openpgp::parse::Parse;
 pub struct GpgKeyRecord {
     pub package_name: String,
     pub key_type: String,
+    pub key_size: Option<usize>,
     pub uid: String,
     pub expires: String,
     pub fingerprint: String,
@@ -73,6 +74,7 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
     for (pkg_name, gpg_block) in raw_records {
         let mut key_type_str = "Unknown".to_string();
         let mut uid_string = "No UID found".to_string();
+        let mut key_size: Option<usize> = None;
         let mut expires_str = "Unknown".to_string();
         let mut fingerprint_str = "Unknown".to_string();
         let mut is_expired = false;
@@ -82,6 +84,8 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
             fingerprint_str = cert.fingerprint().to_string();
             let primary_key = cert.primary_key();
             key_type_str = primary_key.key().pk_algo().to_string();
+            key_size = primary_key.key().mpis().bits();
+
             let uids: Vec<String> = cert.userids().map(|uid| uid.userid().to_string()).collect();
             if !uids.is_empty() {
                 uid_string = uids.join(", ");
@@ -128,6 +132,7 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
         let record = GpgKeyRecord {
             package_name: pkg_name,
             key_type: key_type_str,
+            key_size: key_size,
             uid: uid_string,
             expires: expires_str,
             fingerprint: fingerprint_str,

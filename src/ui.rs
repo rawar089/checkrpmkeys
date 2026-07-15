@@ -222,6 +222,10 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
     ];
     let label_width = labels.iter().map(|l| l.chars().count()).max().unwrap_or(0) + 1;
     let pad = |label: &str| format!("{label:<label_width$}");
+    let key_type_str = match record.key_size {
+        Some(size) => format!("{} {} bits",record.key_type.clone(), size),
+        None => record.key_type.clone(),
+    };
 
     let label_style = Style::default().add_modifier(Modifier::BOLD);
     let lines = vec![
@@ -231,7 +235,8 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::styled(pad(app.i18n.detail_key_type), label_style),
-            Span::raw(record.key_type.clone()),
+
+            Span::raw(key_type_str),
         ]),
         Line::from(vec![
             Span::styled(pad(app.i18n.detail_owner), label_style),
