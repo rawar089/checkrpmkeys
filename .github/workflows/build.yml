@@ -15,7 +15,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends pkg-config libnettle-dev
+          sudo apt-get install -y --no-install-recommends pkg-config nettle-dev
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
