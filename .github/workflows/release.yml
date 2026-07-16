@@ -8,15 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            arch: amd64
-            binary_name: checkrpmkeys-linux-x86_64
-          - target: aarch64-unknown-linux-gnu
-            arch: arm64
-            binary_name: checkrpmkeys-linux-arm64
+    env:
+      TARGET: x86_64-unknown-linux-gnu
+      BINARY_NAME: checkrpmkeys-linux-x86_64
 
     steps:
       - name: Code checkout
@@ -25,34 +19,25 @@ jobs:
       - name: Rust Toolchain setup
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ env.TARGET }}
 
       - name: Install dependencies
         run: |
-          sudo dpkg --add-architecture ${{ matrix.arch }}
           sudo apt-get update
-          if [ "${{ matrix.arch }}" = "amd64" ]; then
-            sudo apt-get install -y pkg-config nettle-dev
-          else
-            sudo apt-get install -y gcc-aarch64-linux-gnu pkg-config nettle-dev:arm64
-          fi
+          sudo apt-get install -y pkg-config nettle-dev
 
       - name: Build
-        env:
-          PKG_CONFIG_ALLOW_CROSS: "1"
-          PKG_CONFIG_PATH: ${{ matrix.arch == 'arm64' && '/usr/lib/aarch64-linux-gnu/pkg-config' || '/usr/lib/x86_64-linux-gnu/pkg-config' }}
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: ${{ matrix.arch == 'arm64' && 'aarch64-linux-gnu-gcc' || '' }}
         run: |
           mkdir -p dist
-          cargo build --release --target ${{ matrix.target }}
+          cargo build --release --target ${{ env.TARGET }}
 
-          tar -C target/${{ matrix.target }}/release -czf dist/${{ matrix.binary_name }}.tar.gz checkrpmkeys
-          sha256sum dist/${{ matrix.binary_name }}.tar.gz > dist/${{ matrix.binary_name }}.tar.gz.sha256
+          tar -C target/${{ env.TARGET }}/release -czf dist/${{ env.BINARY_NAME }}.tar.gz checkrpmkeys
+          sha256sum dist/${{ env.BINARY_NAME }}.tar.gz > dist/${{ env.BINARY_NAME }}.tar.gz.sha256
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.binary_name }}
+          name: release-${{ env.BINARY_NAME }}
           path: dist/*
           if-no-files-found: error
 
