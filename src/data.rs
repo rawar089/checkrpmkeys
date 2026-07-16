@@ -1,10 +1,12 @@
 use serde::Serialize;
-use std::process::Command;
+use std::io;
+use std::process::{Command, Output};
 use std::time::SystemTime;
 use chrono::{DateTime, Local};
 use sequoia_openpgp::Cert;
 use sequoia_openpgp::policy::StandardPolicy;
 use sequoia_openpgp::parse::Parse;
+use anyhow::{Context, Result};
 
 
 #[derive(Serialize, Clone, Debug)]
@@ -20,31 +22,35 @@ pub struct GpgKeyRecord {
 }
 
 
-fn fetch_rpm_gpg_packages() -> Vec<(String, String)> {
-    let output = execute_rpm();
-
-    let mut records = Vec::new();
-    if let Ok(out) = output {
-        let stdout_str = String::from_utf8_lossy(&out.stdout);
-        let raw_blocks = stdout_str.split("\n---END_RPM_RECORD---\n");
-
-        for block in raw_blocks {
-            let mut lines = block.trim().lines();
-            if let Some(pkg_name) = lines.next() {
-                if pkg_name.is_empty() {
-                    continue;
-                }
-                let description: Vec<&str> = lines.collect();
-                records.push((pkg_name.to_string(), description.join("\n")));
-            }
-        }
-    } else {
-        output.expect("Failed to execute rpm command");
-    }
-    records
+fn is_rpm_installed() -> Result<()> {
+    Command::new("rpm")
+        .arg("--version")
+        .output()
+        .with_context(|| "rpm command is not installed or is not available on PATH")?;
+    Ok(())
 }
 
-fn execute_rpm() -> Result<std::process::Output, std::io::Error> {
+fn fetch_rpm_gpg_packages() -> Result<Vec<(String, String)>> {
+    let output = execute_rpm()?;
+
+    let mut records = Vec::new();
+    let stdout_str = String::from_utf8_lossy(&output.stdout);
+    let raw_blocks = stdout_str.split("\n---END_RPM_RECORD---\n");
+
+    for block in raw_blocks {
+        let mut lines = block.trim().lines();
+        if let Some(pkg_name) = lines.next() {
+            if pkg_name.is_empty() {
+                continue;
+            }
+            let description: Vec<&str> = lines.collect();
+            records.push((pkg_name.to_string(), description.join("\n")));
+        }
+    }
+    Ok(records)
+}
+
+fn execute_rpm() -> io::Result<Output> {
     Command::new("rpm")
         .args(["-qa",
             "gpg-pubkey*",
@@ -145,8 +151,9 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
     gpg_data
 }
 
-pub fn load_data() -> Vec<GpgKeyRecord> {
-    get_gpg_data(fetch_rpm_gpg_packages())
+pub fn load_data() -> Result<Vec<GpgKeyRecord>> {
+    is_rpm_installed()?;
+    Ok(get_gpg_data(fetch_rpm_gpg_packages()?))
 }
 
 /// Derived status used for coloring/sorting. Expired takes priority over
@@ -169,8 +176,6 @@ impl GpgKeyRecord {
         }
     }
 }
-
-
 
 
 

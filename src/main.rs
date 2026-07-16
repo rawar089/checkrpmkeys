@@ -49,7 +49,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let optional_output = args.json || args.yaml || args.generate;
 
-    let records = load_data();
+    let records = load_data()?;
 
     if optional_output  {
         run_cli(&args, records)
