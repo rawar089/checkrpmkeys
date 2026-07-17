@@ -28,7 +28,6 @@ use crate::data::GpgKeyRecord;
     about = "Checks installed RPM repository GPG signing keys for expirations.",
     long_about = "Queries the local RPM database for 'gpg-pubkey' packages, decodes their internal cryptographic profiles using sequoia, and displays expiration states in  a tui."
 )]
-
 struct Args {
     /// Output the raw records array as pretty-printed JSON payload
     #[arg(short, long, conflicts_with = "generate", conflicts_with = "yaml")]
@@ -99,10 +98,8 @@ where
     loop {
         terminal.draw(|f| ui::draw(f, app))?;
 
-        if event::poll(Duration::from_millis(200))? {
-            if let Event::Key(key) = event::read()? {
-                // On some platforms (Windows) key events fire on both press
-                // and release; only act on press to avoid double input.
+        if event::poll(Duration::from_millis(200))?
+            &&  let Event::Key(key) = event::read()? {
                 if key.kind != KeyEventKind::Press {
                     continue;
                 }
@@ -111,7 +108,6 @@ where
                     InputMode::Filtering => handle_filter_key(app, key.code),
                 }
             }
-        }
 
         if app.should_quit {
             return Ok(());

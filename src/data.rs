@@ -144,7 +144,7 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
         let record = GpgKeyRecord {
             package_name: pkg_name,
             key_type: key_type_str,
-            key_size: key_size,
+            key_size,
             uid: uid_string,
             expires: expires_str,
             fingerprint: fingerprint_str,
