@@ -98,6 +98,11 @@ fn draw_table(f: &mut Frame, area: Rect, app: &mut App) {
                 Span::raw("\u{26A0} "),
                 Span::raw(i18n.status_invalid),
             ]))
+            .style(Style::default().fg(Color::Red)),
+            KeyStatus::Legacy => Cell::from(Line::from(vec![
+                Span::raw("\u{26A0} "),
+                Span::raw(i18n.status_legacy),
+            ]))
             .style(Style::default().fg(Color::Yellow)),
             KeyStatus::Valid => Cell::from(Line::from(vec![
                 Span::raw("\u{2713} "),
@@ -119,9 +124,9 @@ fn draw_table(f: &mut Frame, area: Rect, app: &mut App) {
         Constraint::Percentage(15),
         Constraint::Percentage(5),
         Constraint::Percentage(35),
-        Constraint::Length(12),
-        Constraint::Length(20),
         Constraint::Length(11),
+        Constraint::Length(20),
+        Constraint::Length(12),
     ];
 
     let title = format!(
@@ -200,6 +205,12 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
         ),
         KeyStatus::Invalid => Span::styled(
             app.i18n.status_invalid,
+            Style::default()
+                .fg(Color::Red)
+                .add_modifier(Modifier::BOLD),
+        ),
+        KeyStatus::Legacy => Span::styled(
+            app.i18n.status_legacy,
             Style::default()
                 .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD),

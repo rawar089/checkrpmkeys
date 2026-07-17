@@ -69,6 +69,7 @@ pub struct Translations {
     pub status_valid: &'static str,
     pub status_expired: &'static str,
     pub status_invalid: &'static str,
+    pub status_legacy: &'static str,
 
     pub keys_title: &'static str,
     pub sorted_by: &'static str,
@@ -123,6 +124,7 @@ impl Translations {
                 status_valid: "Valid",
                 status_expired: "Expired",
                 status_invalid: "Invalid",
+                status_legacy: "Legacy",
 
                 keys_title: "Keys",
                 sorted_by: "Sorted by",
@@ -159,7 +161,7 @@ impl Translations {
             Lang::De => Self {
                 app_title: "GPG-Schl\u{00FC}ssel-Inspektor",
                 valid: "g\u{00FC}ltig",
-                expired: "abgelaufen",
+                expired: "abglaufen",
                 invalid: "ung\u{00FC}ltig",
                 total: "gesamt",
 
@@ -173,6 +175,7 @@ impl Translations {
                 status_valid: "G\u{00FC}ltig",
                 status_expired: "Abgelaufen",
                 status_invalid: "Ung\u{00FC}ltig",
+                status_legacy: "Missbiligt",
 
                 keys_title: "Schl\u{00FC}ssel",
                 sorted_by: "Sortiert nach",
@@ -223,6 +226,7 @@ impl Translations {
                 status_valid: "Valide",
                 status_expired: "Expir\u{00E9}e",
                 status_invalid: "Invalide",
+                status_legacy: "Ver\u{00E9}d\u{00E9}e",
 
                 keys_title: "Cl\u{00E9}s",
                 sorted_by: "Tri\u{00E9} par",

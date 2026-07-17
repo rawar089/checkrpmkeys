@@ -19,6 +19,7 @@ pub struct GpgKeyRecord {
     pub fingerprint: String,
     pub expired: bool,
     pub valid: bool,
+    pub legacy: bool,
 }
 
 
@@ -74,7 +75,8 @@ fn get_expiration_timestamp(cert: &Cert) -> Option<SystemTime> {
 
 fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
     let mut gpg_data = Vec::new();
-    let policy = &StandardPolicy::new();
+    let legacy_policy = create_legacy_policy();
+    let policy = StandardPolicy::new();
     let debug = false;
 
     for (pkg_name, gpg_block) in raw_records {
@@ -85,7 +87,7 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
         let mut fingerprint_str = "Unknown".to_string();
         let mut is_expired = false;
         let mut is_valid = false;
-
+        let mut is_legacy = false;
         if let Ok(cert) = Cert::from_bytes(gpg_block.as_bytes()) {
             fingerprint_str = cert.fingerprint().to_string();
             let primary_key = cert.primary_key();
@@ -96,7 +98,8 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
             if !uids.is_empty() {
                 uid_string = uids.join(", ");
             }
-
+            // we do not use ValidCert methods here because we want the
+            // expiration date also for already expired keys.
             let key_expiry = get_expiration_timestamp(&cert);
             match key_expiry {
                 Some(expiration) => {
@@ -119,15 +122,18 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
                 }
             }
 
-            match cert.with_policy(policy,None) {
-                Ok(_valid_cert) => {  // cert is valid with policy
-                    is_valid = true; // TODO add missing revocation check
+            match cert.with_policy(&policy,None) {
+                Ok(_valid_cert) => { // cert is valid with policy.
+                    is_valid = true; // Afaik rpm does no revocation of keys. So we do not check.
                 },
                 Err(_e) if !is_expired  => {
-                    // Our default policy rejects this but the key seems ok for rpm.
-                    // So we ignore it in this version. Need investigation.
-                    // println!("Error: {}\nq", e);
-                    is_valid = true;
+                    // Our default policy rejects this key. But the key may ok for rpm.
+                    // Try to check with less strict legacy policy
+                    is_legacy = true;
+                    match cert.with_policy(&legacy_policy,None) {
+                        Ok(_)=> is_valid = true,
+                        Err(_) => is_valid = true,
+                    }
                 },
                 Err(_) =>  {},  // expired anyway
             }
@@ -144,6 +150,7 @@ fn get_gpg_data(raw_records: Vec<(String, String)>) -> Vec<GpgKeyRecord> {
             fingerprint: fingerprint_str,
             valid: is_valid,
             expired: is_expired,
+            legacy: is_legacy,
         };
 
         gpg_data.push(record);
@@ -163,18 +170,40 @@ pub enum KeyStatus {
     Expired,
     Invalid,
     Valid,
+    Legacy,
 }
 
 impl GpgKeyRecord {
     pub fn status(&self) -> KeyStatus {
         if self.expired {
             KeyStatus::Expired
-        }  else if !self.valid {
+        }  else if self.valid {
+             if self.legacy {
+                 KeyStatus::Legacy
+             } else {
+                 KeyStatus::Valid
+             }
+        }  else {
             KeyStatus::Invalid
-        } else {
-            KeyStatus::Valid
         }
     }
+}
+
+/// Creates a custom Sequoia policy that is more lenient towards legacy cryptographic
+/// algorithms which are often found in legitimate but older RPM
+/// repository keys.
+pub fn create_legacy_policy() -> StandardPolicy<'static> {
+    let mut policy = StandardPolicy::new();
+
+    // Allow SHA-1 signatures. While SHA-1 is cryptographically weak, it is still
+    // widely used in the RPM ecosystem for legacy compatibility.
+    policy.reject_hash_at(sequoia_openpgp::types::HashAlgorithm::SHA1, None);
+
+    // Allow DSA signatures and keys. DSA is considered legacy but still present in
+    // many RPM repositories.
+    policy.reject_asymmetric_algo_at(sequoia_openpgp::policy::AsymmetricAlgorithm::DSA1024, None);
+
+    policy
 }
 
 
