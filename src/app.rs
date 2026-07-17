@@ -225,13 +225,15 @@ impl App {
     /// Returns (total, expired, invalid-but-not-expired) counts over the
     /// full dataset, regardless of the current filter.
     pub fn counts(&self) -> (usize, usize, usize) {
-        let total = self.all_records.len();
-        let expired = self.all_records.iter().filter(|r| r.expired).count();
-        let invalid = self
-            .all_records
-            .iter()
-            .filter(|r| !r.valid && !r.expired)
-            .count();
-        (total, expired, invalid)
+        let mut expired = 0;
+        let mut invalid = 0;
+        for r in &self.all_records {
+            if r.expired {
+                expired += 1;
+            } else if !r.valid {
+                invalid += 1;
+            }
+        }
+        (self.all_records.len(), expired, invalid)
     }
 }

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -83,35 +84,36 @@ fn draw_table(f: &mut Frame, area: Rect, app: &mut App) {
     .height(1)
     .bottom_margin(1);
 
-    let rows: Vec<Row> = app
-        .filtered_indices
-        .iter()
-        .map(|&idx| {
-            let r = &app.all_records[idx];
-            let (status_text, status_style) = match r.status() {
-                KeyStatus::Expired => (
-                    format!("\u{2717} {}", app.i18n.status_expired),
-                    Style::default().fg(Color::Red),
-                ),
-                KeyStatus::Invalid => (
-                    format!("\u{26A0} {}", app.i18n.status_invalid),
-                    Style::default().fg(Color::Yellow),
-                ),
-                KeyStatus::Valid => (
-                    format!("\u{2713} {}", app.i18n.status_valid),
-                    Style::default().fg(Color::Green),
-                ),
-            };
-            Row::new(vec![
-                Cell::from(r.package_name.clone()),
-                Cell::from(r.key_type.clone()),
-                Cell::from(r.uid.clone()),
-                Cell::from(r.expires.clone()),
-                Cell::from(short_fingerprint(&r.fingerprint)),
-                Cell::from(status_text).style(status_style),
-            ])
-        })
-        .collect();
+    let all_records = &app.all_records;
+    let i18n = &app.i18n;
+    let rows = app.filtered_indices.iter().map(move |&idx| {
+        let r = &all_records[idx];
+        let status_cell = match r.status() {
+            KeyStatus::Expired => Cell::from(Line::from(vec![
+                Span::raw("\u{2717} "),
+                Span::raw(i18n.status_expired),
+            ]))
+            .style(Style::default().fg(Color::Red)),
+            KeyStatus::Invalid => Cell::from(Line::from(vec![
+                Span::raw("\u{26A0} "),
+                Span::raw(i18n.status_invalid),
+            ]))
+            .style(Style::default().fg(Color::Yellow)),
+            KeyStatus::Valid => Cell::from(Line::from(vec![
+                Span::raw("\u{2713} "),
+                Span::raw(i18n.status_valid),
+            ]))
+            .style(Style::default().fg(Color::Green)),
+        };
+        Row::new([
+            Cell::from(r.package_name.as_str()),
+            Cell::from(r.key_type.as_str()),
+            Cell::from(r.uid.as_str()),
+            Cell::from(r.expires.as_str()),
+            Cell::from(short_fingerprint(&r.fingerprint)),
+            status_cell,
+        ])
+    });
 
     let widths = [
         Constraint::Percentage(15),
@@ -223,33 +225,35 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
     let label_width = labels.iter().map(|l| l.chars().count()).max().unwrap_or(0) + 1;
     let pad = |label: &str| format!("{label:<label_width$}");
     let key_type_str = match record.key_size {
-        Some(size) => format!("{} {} bits",record.key_type.clone(), size),
-        None => record.key_type.clone(),
+        Some(size) => Cow::Owned(format!("{} {} bits", record.key_type, size)),
+        None => Cow::Borrowed(record.key_type.as_str()),
     };
 
     let label_style = Style::default().add_modifier(Modifier::BOLD);
-    let lines = vec![
+    let lines = [
         Line::from(vec![
             Span::styled(pad(app.i18n.detail_package), label_style),
-            Span::raw(record.package_name.clone()),
+            Span::raw(record.package_name.as_str()),
         ]),
         Line::from(vec![
             Span::styled(pad(app.i18n.detail_key_type), label_style),
-
             Span::raw(key_type_str),
         ]),
         Line::from(vec![
             Span::styled(pad(app.i18n.detail_owner), label_style),
-            Span::raw(record.uid.clone()),
+            Span::raw(record.uid.as_str()),
         ]),
         Line::from(vec![
             Span::styled(pad(app.i18n.detail_expires), label_style),
-            Span::raw(record.expires.clone()),
+            Span::raw(record.expires.as_str()),
         ]),
-        Line::from(vec![Span::styled(pad(app.i18n.detail_status), label_style), status_span]),
+        Line::from(vec![
+            Span::styled(pad(app.i18n.detail_status), label_style),
+            status_span,
+        ]),
         Line::from(""),
         Line::from(Span::styled(app.i18n.detail_fingerprint, label_style)),
-        Line::from(record.fingerprint.clone()),
+        Line::from(record.fingerprint.as_str()),
     ];
 
     let title = format!(" {} ", app.i18n.details_title);
@@ -258,7 +262,9 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::Cyan));
 
-    let p = Paragraph::new(lines).block(block).wrap(Wrap { trim: true });
+    let p = Paragraph::new(Vec::from(lines))
+        .block(block)
+        .wrap(Wrap { trim: true });
     f.render_widget(p, popup_area);
 }
 
@@ -343,10 +349,10 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 
 /// Truncates a long fingerprint for the table column; full value is shown
 /// in the details popup.
-fn short_fingerprint(fp: &str) -> String {
+fn short_fingerprint(fp: &str) -> Cow<'_, str> {
     if fp.len() <= 20 {
-        fp.to_string()
+        Cow::Borrowed(fp)
     } else {
-        format!("...{}", &fp[fp.len() - 16..])
+        Cow::Owned(format!("...{}", &fp[fp.len() - 16..]))
     }
 }
