@@ -22,7 +22,7 @@ pub struct App {
     /// Full, unfiltered dataset. Never reordered so indices stay stable.
     pub all_records: Vec<GpgKeyRecord>,
     /// Indices into `all_records` that currently pass the filter, in
-    /// display order (i.e. already sorted).
+    /// display order (already sorted).
     pub filtered_indices: Vec<usize>,
     pub table_state: TableState,
     pub input_mode: InputMode,

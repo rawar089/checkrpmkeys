@@ -24,9 +24,7 @@ use crate::data::GpgKeyRecord;
 // Define the command-line argument schema using Clap
 #[derive(Parser, Debug)]
 #[command(
-    name = "checkrpmkeys",
-    author = "rawar089",
-    version = "0.2",
+    version,
     about = "Checks installed RPM repository GPG signing keys for expirations.",
     long_about = "Queries the local RPM database for 'gpg-pubkey' packages, decodes their internal cryptographic profiles using sequoia, and displays expiration states in  a tui."
 )]

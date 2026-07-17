@@ -223,9 +223,8 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
         ),
     };
 
-    // Label widths vary across languages (e.g. "Schl\u{00FC}sseltyp:" vs "Key Type:"),
-    // so pad to the longest label in the active language rather than a
-    // fixed English-sized column.
+    // Label widths vary across languages
+    // so pad to the longest label in the active language
     let labels = [
         app.i18n.detail_package,
         app.i18n.detail_key_type,
