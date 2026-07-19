@@ -123,10 +123,10 @@ fn draw_table(f: &mut Frame, area: Rect, app: &mut App) {
     let widths = [
         Constraint::Percentage(15),
         Constraint::Percentage(5),
-        Constraint::Percentage(35),
+        Constraint::Percentage(34),
         Constraint::Length(11),
         Constraint::Length(20),
-        Constraint::Length(12),
+        Constraint::Length(13),
     ];
 
     let title = format!(
@@ -198,28 +198,40 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
     let popup_area = centered_rect(70, 55, area);
     f.render_widget(Clear, popup_area);
 
-    let status_span = match record.status() {
-        KeyStatus::Expired => Span::styled(
-            app.i18n.status_expired,
-            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+    let (status_span, status_explanation) = match record.status() {
+        KeyStatus::Expired => (
+            Span::styled(
+                app.i18n.status_expired,
+                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            ),
+            app.i18n.status_explanation_expired,
         ),
-        KeyStatus::Invalid => Span::styled(
-            app.i18n.status_invalid,
-            Style::default()
-                .fg(Color::Red)
-                .add_modifier(Modifier::BOLD),
+        KeyStatus::Invalid => (
+            Span::styled(
+                app.i18n.status_invalid,
+                Style::default()
+                    .fg(Color::Red)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            app.i18n.status_explanation_invalid,
         ),
-        KeyStatus::Legacy => Span::styled(
-            app.i18n.status_legacy,
-            Style::default()
-                .fg(Color::Yellow)
-                .add_modifier(Modifier::BOLD),
+        KeyStatus::Legacy => (
+            Span::styled(
+                app.i18n.status_legacy,
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            app.i18n.status_explanation_legacy,
         ),
-        KeyStatus::Valid => Span::styled(
-            app.i18n.status_valid,
-            Style::default()
-                .fg(Color::Green)
-                .add_modifier(Modifier::BOLD),
+        KeyStatus::Valid => (
+            Span::styled(
+                app.i18n.status_valid,
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            app.i18n.status_explanation_valid,
         ),
     };
 
@@ -230,6 +242,7 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
         app.i18n.detail_key_type,
         app.i18n.detail_owner,
         app.i18n.detail_expires,
+        app.i18n.detail_fingerprint,
         app.i18n.detail_status,
     ];
     let label_width = labels.iter().map(|l| l.chars().count()).max().unwrap_or(0) + 1;
@@ -250,20 +263,26 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
             Span::raw(key_type_str),
         ]),
         Line::from(vec![
-            Span::styled(pad(app.i18n.detail_owner), label_style),
-            Span::raw(record.uid.as_str()),
-        ]),
-        Line::from(vec![
             Span::styled(pad(app.i18n.detail_expires), label_style),
             Span::raw(record.expires.as_str()),
         ]),
         Line::from(vec![
+            Span::styled(pad(app.i18n.detail_fingerprint), label_style),
+            Span::raw(record.fingerprint.as_str()),
+        ]),
+        Line::from(vec![
+            Span::styled(pad(app.i18n.detail_owner), label_style),
+            Span::raw(record.uid.as_str()),
+        ]),
+        Line::from(""),
+        Line::from(vec![
             Span::styled(pad(app.i18n.detail_status), label_style),
             status_span,
         ]),
-        Line::from(""),
-        Line::from(Span::styled(app.i18n.detail_fingerprint, label_style)),
-        Line::from(record.fingerprint.as_str()),
+        Line::from(Span::styled(
+            status_explanation,
+            Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC),
+        )),
     ];
 
     let title = format!(" {} ", app.i18n.details_title);

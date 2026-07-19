@@ -86,6 +86,10 @@ pub struct Translations {
     pub detail_owner: &'static str,
     pub detail_expires: &'static str,
     pub detail_status: &'static str,
+    pub status_explanation_valid: &'static str,
+    pub status_explanation_expired: &'static str,
+    pub status_explanation_invalid: &'static str,
+    pub status_explanation_legacy: &'static str,
     pub detail_fingerprint: &'static str,
 
     pub help_title: &'static str,
@@ -141,6 +145,10 @@ impl Translations {
                 detail_owner: "Owner (UID):",
                 detail_expires: "Expires:",
                 detail_status: "Status:",
+                status_explanation_valid: "The key was successfully verified against the current OpenPGP policy.",
+                status_explanation_expired: "The key has passed its expiration date and should be replaced or renewed.",
+                status_explanation_invalid: "The key does not pass the default OpenPGP policy verification.",
+                status_explanation_legacy: "The key is valid, but the cryptographic algorithms used, such as DSA or SHA1, are outdated and no longer state of the art.",
                 detail_fingerprint: "Fingerprint:",
 
                 help_title: "Keyboard Shortcuts (h/Esc to close)",
@@ -161,7 +169,7 @@ impl Translations {
             Lang::De => Self {
                 app_title: "GPG-Schl\u{00FC}ssel-Inspektor",
                 valid: "g\u{00FC}ltig",
-                expired: "abglaufen",
+                expired: "abgelaufen",
                 invalid: "ung\u{00FC}ltig",
                 total: "gesamt",
 
@@ -175,7 +183,7 @@ impl Translations {
                 status_valid: "G\u{00FC}ltig",
                 status_expired: "Abgelaufen",
                 status_invalid: "Ung\u{00FC}ltig",
-                status_legacy: "Missbiligt",
+                status_legacy: "Missbilligt",
 
                 keys_title: "Schl\u{00FC}ssel",
                 sorted_by: "Sortiert nach",
@@ -192,6 +200,10 @@ impl Translations {
                 detail_owner: "Eigent\u{00FC}mer (UID):",
                 detail_expires: "L\u{00E4}uft ab:",
                 detail_status: "Status:",
+                status_explanation_valid: "Die Pr\u{00FC}fung des Schl\u{00FC}ssel anhand der aktuellen Standard OpenPGP Richtlinie ist erfolgreich.",
+                status_explanation_expired: "Der Schl\u{00FC}ssel ist abgelaufen und sollte ersetzt oder erneuert werden.",
+                status_explanation_invalid: "Der Schl\u{00FC}ssel besteht die \u{00FC}bliche OpenPGP Pr\u{00FC}fung nicht.",
+                status_explanation_legacy: "Der Schl\u{00FC}ssel ist g\u{00FC}ltig verwendet aber Kryptographie wie DSA oder SHA1. Diese ist veraltet und nicht mehr Stand der Technik.",
                 detail_fingerprint: "Fingerabdruck:",
 
                 help_title: "Tastenk\u{00FC}rzel (h/Esc zum Schlie\u{00DF}en)",
@@ -226,7 +238,7 @@ impl Translations {
                 status_valid: "Valide",
                 status_expired: "Expir\u{00E9}e",
                 status_invalid: "Invalide",
-                status_legacy: "Ver\u{00E9}d\u{00E9}e",
+                status_legacy: "Obsol\u{00E8}te",
 
                 keys_title: "Cl\u{00E9}s",
                 sorted_by: "Tri\u{00E9} par",
@@ -243,12 +255,16 @@ impl Translations {
                 detail_owner: "Propri\u{00E9}taire (UID) :",
                 detail_expires: "Expire le :",
                 detail_status: "Statut :",
+                status_explanation_valid: "La cl\u{00E9} a \u{00E9}t\u{00E9} v\u{00E9}rifi\u{00E9}e avec succ\u{00E8}s conform\u{00E9}ment \u{00E0} la politique OpenPGP en vigueur.",
+                status_explanation_expired: "La cl\u{00E9} a d\u{00E9}pass\u{00E9} sa date d'expiration et doit \u{00EA}tre remplac\u{00E9}e ou renouvel\u{00E9}e.",
+                status_explanation_invalid: "La cl\u{00E9} ne passe pas la v\u{00E9}rification de la politique OpenPGP par d\u{00E9}faut.",
+                status_explanation_legacy: "La cl\u{00E9} est valide, mais les algorithmes de cryptographie utilis\u{00E9}s, tels que DSA ou SHA1, sont obsol\u{00E8}tes et ne correspondent plus \u{00E0} l'\u{00E9}tat de l'art.",
                 detail_fingerprint: "Empreinte :",
 
                 help_title: "Raccourcis clavier (h/\u{00C9}chap pour fermer)",
                 kb_move: "D\u{00E9}placer la s\u{00E9}lection haut / bas",
                 kb_top_bottom: "Aller au d\u{00E9}but / \u{00E0} la fin",
-                kb_page: "D\u{00E9}placer de 10 lignes",
+                kb_page: "Se d\u{00E9}placer de 10 lignes",
                 kb_filter: "Rechercher / filtrer la liste",
                 kb_sort_column: "Changer la colonne de tri",
                 kb_reverse_sort: "Inverser l'ordre de tri",
