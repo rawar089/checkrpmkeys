@@ -297,13 +297,62 @@ fn draw_details_popup(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(p, popup_area);
 }
 
-/// Renders the keybindings help overlay, toggled with `h`.
+/// Formats the selected key popup information as plain text for copying.
+pub fn selected_key_details_text(app: &App) -> Option<String> {
+    let record = app.selected_record()?;
+    let (status, explanation) = match record.status() {
+        KeyStatus::Expired => (
+            app.i18n.status_expired,
+            app.i18n.status_explanation_expired,
+        ),
+        KeyStatus::Invalid => (
+            app.i18n.status_invalid,
+            app.i18n.status_explanation_invalid,
+        ),
+        KeyStatus::Legacy => (
+            app.i18n.status_legacy,
+            app.i18n.status_explanation_legacy,
+        ),
+        KeyStatus::Valid => (
+            app.i18n.status_valid,
+            app.i18n.status_explanation_valid,
+        ),
+    };
+    let key_type = match record.key_size {
+        Some(size) => format!("{} {} bits", record.key_type, size),
+        None => record.key_type.clone(),
+    };
+    let fields = [
+        (app.i18n.detail_package, record.package_name.as_str()),
+        (app.i18n.detail_key_type, key_type.as_str()),
+        (app.i18n.detail_expires, record.expires.as_str()),
+        (app.i18n.detail_fingerprint, record.fingerprint.as_str()),
+        (app.i18n.detail_owner, record.uid.as_str()),
+        (app.i18n.detail_status, status),
+    ];
+    let label_width = fields
+        .iter()
+        .map(|(label, _)| label.chars().count())
+        .max()
+        .unwrap_or(0)
+        + 1;
+    let mut text = fields
+        .iter()
+        .map(|(label, value)| format!("{label:<label_width$}{value}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    text.push('\n');
+    text.push_str(explanation);
+    Some(text)
+}
+
+/// Renders the keybindings help overlay.
 fn draw_help_popup(f: &mut Frame, area: Rect, app: &App) {
-    let popup_area = centered_rect(64, 70, area);
+    let popup_area = centered_rect(64, 90, area);
     f.render_widget(Clear, popup_area);
 
     let t = &app.i18n;
-    let bindings: [(&str, &str); 11] = [
+    let bindings: [(&str, &str); 12] = [
         ("j / k, \u{2191} / \u{2193}", t.kb_move),
         ("g / G", t.kb_top_bottom),
         ("PageUp / PageDown", t.kb_page),
@@ -311,6 +360,7 @@ fn draw_help_popup(f: &mut Frame, area: Rect, app: &App) {
         ("s", t.kb_sort_column),
         ("r", t.kb_reverse_sort),
         ("Enter", t.kb_details),
+        ("Ctrl-C", t.kb_copy_details),
         ("c", t.kb_clear_filter),
         ("l", t.kb_language),
         ("h", t.kb_help),
@@ -322,7 +372,16 @@ fn draw_help_popup(f: &mut Frame, area: Rect, app: &App) {
         .fg(Color::Cyan)
         .add_modifier(Modifier::BOLD);
 
-    let mut lines: Vec<Line> = bindings
+    let mut lines = vec![
+        Line::from(Span::styled(
+            format!("{} v{}", t.app_title, env!("CARGO_PKG_VERSION")),
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )),
+        Line::from(""),
+    ];
+    lines.extend(bindings
         .iter()
         .map(|(key, desc)| {
             Line::from(vec![
@@ -330,7 +389,7 @@ fn draw_help_popup(f: &mut Frame, area: Rect, app: &App) {
                 Span::raw(*desc),
             ])
         })
-        .collect();
+    );
 
     lines.push(Line::from(""));
     lines.push(Line::from(vec![
@@ -355,7 +414,7 @@ fn draw_help_popup(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(p, popup_area);
 }
 
-/// Centers a rectangle of `percent_x` x `percent_y` size within `r`.
+/// Center a rectangle of percent_x  percent_y size within r.
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     let vertical = Layout::default()
         .direction(Direction::Vertical)
@@ -376,8 +435,7 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(vertical[1])[1]
 }
 
-/// Truncates a long fingerprint for the table column; full value is shown
-/// in the details popup.
+/// Truncates a long fingerprint for the table column
 fn short_fingerprint(fp: &str) -> Cow<'_, str> {
     if fp.len() <= 20 {
         Cow::Borrowed(fp)

@@ -3,12 +3,16 @@ mod data;
 mod i18n;
 mod ui;
 mod cli;
-use std::io;
+use std::io::{self, Write};
 use std::time::Duration;
 
 use anyhow::Result;
+use arboard::Clipboard;
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    event::{
+        self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers,
+    },
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -95,12 +99,23 @@ where
     B: Backend,
     B::Error: std::error::Error + Send + Sync + 'static,
 {
+    // On Wayland, the Clipboard owns the data source. Keep it alive for the
+    // entire TUI session so copied details remain available.
+    let mut clipboard = None;
+
     loop {
         terminal.draw(|f| ui::draw(f, app))?;
 
         if event::poll(Duration::from_millis(200))?
             &&  let Event::Key(key) = event::read()? {
                 if key.kind != KeyEventKind::Press {
+                    continue;
+                }
+                if app.show_details
+                    && key.code == KeyCode::Char('c')
+                    && key.modifiers.contains(KeyModifiers::CONTROL)
+                {
+                    copy_selected_key_details(app, &mut clipboard)?;
                     continue;
                 }
                 match app.input_mode {
@@ -113,6 +128,33 @@ where
             return Ok(());
         }
     }
+}
+
+fn copy_selected_key_details(app: &App, clipboard: &mut Option<Clipboard>) -> Result<()> {
+    if let Some(details) = ui::selected_key_details_text(app) {
+        if let Some(clipboard) = clipboard.as_mut() {
+            if clipboard.set_text(details.clone()).is_ok() {
+                return Ok(());
+            }
+        } else if let Ok(mut new_clipboard) = Clipboard::new()
+            && new_clipboard.set_text(details.clone()).is_ok() {
+            *clipboard = Some(new_clipboard);
+            return Ok(());
+        }
+
+        // Try teminal fallback if Wayland/X11 clipboard do not work
+        copy_with_osc52(&details)?;
+    }
+    Ok(())
+}
+
+/// Sends clipboard contents to the user's terminal. This works over SSH when
+/// the local terminal supports OSC 52, without requiring a remote display.
+fn copy_with_osc52(text: &str) -> io::Result<()> {
+    let encoded = STANDARD.encode(text);
+    let mut stdout = io::stdout().lock();
+    write!(stdout, "\x1b]52;c;{encoded}\x1b\\")?;
+    stdout.flush()
 }
 
 fn handle_normal_key(app: &mut App, code: KeyCode) {
