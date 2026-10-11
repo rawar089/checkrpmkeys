@@ -4,7 +4,11 @@ checkrpmkeys
 Tiny tui/cli tool to check installed RPM repository GPG signing keys for expirations. The tool
 queries the local RPM database for 'gpg-pubkey' packages with the rpm command. 
 It decodes the internal cryptographic data using the sequoia crate and analyzes expiration states.
-Note the sequoia-openpgp crate is used with the default crypto backend nettle.  
+
+Note the sequoia-openpgp crate is using the crypto backend nettle by default. In version 4 nettle has removed pgp support.
+From version 0.5.0 on the pure Rust `crypto-rust` backend will be used instead. The use of the `crypto-rust` crate in general 
+is not recommended, as it has not yet reached the level of maturity of other external backends such as `Nettle` or `OpenSSL`.
+However, its use is justifiable for this application, which deliberately avoids network functions and merely displays information.
 
 If started with an option the tool is working in cli mode and exits after the information has been written to stdout in the specified format.
 
@@ -43,6 +47,4 @@ cargo run
 ### Requirements:
 
 - Linux OS with installed rpm command
-- libhogweed6 
-- libnettle8
 
