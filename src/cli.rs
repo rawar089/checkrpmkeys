@@ -11,7 +11,7 @@ fn print_json(keys: &[GpgKeyRecord]) {
 }
 
 fn print_yaml(keys: &[GpgKeyRecord]) {
-    match serde_yaml::to_string(keys) {
+    match serde_yaml_ng::to_string(keys) {
         Ok(yaml_str) => println!("{}", yaml_str),
         Err(e) => eprintln!("Failed to serialize GPG key records to YAML: {}", e),
     }
